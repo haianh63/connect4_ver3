@@ -6,12 +6,12 @@
 
 Sau khi triển khai API của bạn, bạn sẽ cần cung cấp URL endpoint cho server chính:
 ```
-https://your-ai-service.com/api/connect4-move
+https://your-ai-service.com
 ```
 
 ### Ví dụ URL sau khi triển khai bằng Ngrok:
 ```
-https://c3b1-2405-4802-21ad-48b0-7c4a-8729-ca-4c80.ngrok-free.app/api/connect4-move
+https://c3b1-2405-4802-21ad-48b0-7c4a-8729-ca-4c80.ngrok-free.app
 ```
 
 ## Format API
