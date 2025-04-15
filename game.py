@@ -1,8 +1,8 @@
 import ctypes
 import numpy as np
 
-
-lib = ctypes.CDLL("D:\connect-4\connectfour.dll") 
+# nho thay duong dan = duong dan tuyet doi cua file dll
+lib = ctypes.CDLL("D:\chot_AI\setup_connect4\connectfour.dll") 
 
 lib.call_connect_four_agent.argtypes = [
     ctypes.POINTER(ctypes.c_int),  
