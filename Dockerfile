@@ -26,4 +26,4 @@ RUN gcc -shared -o connectfour.so -fPIC connectfour.cpp
 EXPOSE $PORT
 
 # Khởi chạy ứng dụng bằng uvicorn
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "0.0.0.0"]
+CMD uvicorn app:app --host 0.0.0.0 --port $PORT
