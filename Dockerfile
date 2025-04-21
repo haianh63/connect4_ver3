@@ -20,7 +20,7 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Build file connectfour.so từ file connectfour.c
-RUN gcc -shared -o connectfour.so -fPIC connectfour.cpp
+RUN g++ -shared -fPIC -o connectfour.so connectfour.cpp
 
 # Mở cổng do Render cung cấp
 EXPOSE $PORT
