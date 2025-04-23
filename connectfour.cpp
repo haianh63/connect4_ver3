@@ -82,25 +82,155 @@ private:
         return false;
     }
 
-    int evaluatingFunction(const uint64_t bitboard[2])
-    {
+    int evaluatingFunction(const uint64_t bitboard[2]) {
         int8_t board[BOARD_ROW][BOARD_COL];
         bitboard_to_numpy2d(bitboard, board);
-        int human_score = 0;
-        int ai_score = 0;
-        for (int i = 0; i < BOARD_ROW; i++)
-        {
-            for (int j = 0; j < BOARD_COL; j++)
-            {
-                if (board[i][j] == HUMAN_PIECE)
-                    human_score += EVALUATING_BOARD[i][j];
-                if (board[i][j] == AI_PIECE)
-                    ai_score += EVALUATING_BOARD[i][j];
+        
+        // Check for immediate wins/losses first
+        if (isWinning(bitboard, AI_PIECE)) {
+            return 1000000; // Very high score for win
+        }
+        if (isWinning(bitboard, HUMAN_PIECE)) {
+            return -1000000; // Very low score for loss
+        }
+        
+        int score = 0;
+        
+        // 1. Evaluate threat-based scoring
+        score += evaluateThreats(board);
+        
+        // 2. Add center control bonus
+        score += evaluateCenter(board);
+        
+        // 3. Add positional scoring (from your original implementation)
+        score += evaluatePosition(board);
+        
+        return score;
+    }
+    
+    int evaluateThreats(const int8_t board[BOARD_ROW][BOARD_COL]) {
+        int score = 0;
+        
+        // Check horizontal, vertical, and two diagonal directions
+        const int dx[4] = {1, 0, 1, 1};
+        const int dy[4] = {0, 1, 1, -1};
+        
+        for (int y = 0; y < BOARD_ROW; y++) {
+            for (int x = 0; x < BOARD_COL; x++) {
+                for (int dir = 0; dir < 4; dir++) {
+                    score += evaluateLine(board, x, y, dx[dir], dy[dir], AI_PIECE);
+                    score -= evaluateLine(board, x, y, dx[dir], dy[dir], HUMAN_PIECE);
+                }
             }
         }
-        return ai_score - human_score;
+        
+        return score;
     }
-
+    
+    int evaluateLine(const int8_t board[BOARD_ROW][BOARD_COL], int x, int y, int dx, int dy, int piece) {
+        int opponent = (piece == AI_PIECE) ? HUMAN_PIECE : AI_PIECE;
+        
+        // Check if this starting position can still form a connect-4
+        int count = 0;
+        int empty = 0;
+        int emptyPos[INAROW];  // Store positions of empty slots
+        bool valid = true;
+        
+        for (int i = 0; i < INAROW; i++) {
+            int nx = x + i * dx;
+            int ny = y + i * dy;
+            
+            if (nx < 0 || nx >= BOARD_COL || ny < 0 || ny >= BOARD_ROW) {
+                valid = false;
+                break;
+            }
+            
+            if (board[ny][nx] == piece) {
+                count++;
+            } else if (board[ny][nx] == opponent) {
+                valid = false;
+                break;
+            } else {
+                // Check if this empty spot is playable (has support or is bottom row)
+                if (ny == BOARD_ROW - 1 || board[ny + 1][nx] != 0) {
+                    emptyPos[empty++] = i;
+                } else {
+                    // Not immediately playable
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        
+        if (!valid) {
+            return 0;
+        }
+        
+        // Score based on number of pieces and empty playable spots
+        if (count == 3 && empty == 1) {
+            return 1000;  // Immediate winning threat
+        } else if (count == 2 && empty == 2) {
+            return 100;   // Two pieces with two playable spots
+        } else if (count == 1 && empty == 3) {
+            return 10;    // One piece with three playable spots
+        }
+        
+        return 1;  // Valid but not threatening line
+    }
+    
+    int evaluateCenter(const int8_t board[BOARD_ROW][BOARD_COL]) {
+        int score = 0;
+        int center_col = BOARD_COL / 2;
+        
+        // Prioritize control of the center column
+        for (int row = 0; row < BOARD_ROW; row++) {
+            if (board[row][center_col] == AI_PIECE) {
+                score += 30;
+            } else if (board[row][center_col] == HUMAN_PIECE) {
+                score -= 30;
+            }
+        }
+        
+        // Adjacent columns are also valuable but less so
+        for (int row = 0; row < BOARD_ROW; row++) {
+            if (center_col > 0) {
+                if (board[row][center_col-1] == AI_PIECE) {
+                    score += 20;
+                } else if (board[row][center_col-1] == HUMAN_PIECE) {
+                    score -= 20;
+                }
+            }
+            
+            if (center_col < BOARD_COL - 1) {
+                if (board[row][center_col+1] == AI_PIECE) {
+                    score += 20;
+                } else if (board[row][center_col+1] == HUMAN_PIECE) {
+                    score -= 20;
+                }
+            }
+        }
+        
+        return score;
+    }
+    
+    int evaluatePosition(const int8_t board[BOARD_ROW][BOARD_COL]) {
+        int score = 0;
+        
+        // Prefer lower positions as they give more options
+        for (int col = 0; col < BOARD_COL; col++) {
+            for (int row = 0; row < BOARD_ROW; row++) {
+                int position_value = EVALUATING_BOARD[row][col];
+                
+                if (board[row][col] == AI_PIECE) {
+                    score += position_value;
+                } else if (board[row][col] == HUMAN_PIECE) {
+                    score -= position_value;
+                }
+            }
+        }
+        
+        return score;
+    }
     bool is_legal_move(const uint64_t bitboard[2], int action)
     {
         uint64_t bits = bitboard[0] & IS_LEGAL_MOVE_MASK;
