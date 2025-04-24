@@ -365,7 +365,7 @@ public:
         list_to_bitboard(board, bitboard);
         int bestMove;
         double bestScore;
-        minimax(bitboard, 12, -INFINITY, INFINITY, true, bestMove, bestScore);
+        minimax(bitboard, 11, -INFINITY, INFINITY, true, bestMove, bestScore);
         return bestMove;
     }
 };
